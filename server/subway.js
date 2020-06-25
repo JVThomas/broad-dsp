@@ -56,6 +56,7 @@ const processSubwayData = function (req, res) {
     let lines;
 
     //get the list of all the line names for the heavy and light rails
+    //filterint out by types since there is no reason to consider bus routes and commuter rail for subway analysis
     axios.get('https://api-v3.mbta.com/routes', {
         params: {
             'fields[route]': 'long_name,color',
