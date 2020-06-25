@@ -1,20 +1,17 @@
-import React, {Fragment, useEffect, useState} from 'react';
+import React from 'react';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Grid from '@material-ui/core/Grid';
-import { makeStyles } from '@material-ui/core/styles';
 
 export default function Transfers(props) {
-    const [transfers, setTransfers] = useState(props.transfers);
-
     let RouteTags = function(props) {
-
         const routeList = Object.keys(props.routes);
         const gridMargin = {
             marginTop: "10px"
         }
         
+        //routes were pre-processed for each transfer stop on the backend, so its just a simple extraction, iteration, and render
         let tags = routeList.map((route, key) => {
             let routeData = props.routes[route];
             let style = {
@@ -38,6 +35,7 @@ export default function Transfers(props) {
         );
     }
 
+    //transfer stops were already pre-processed on the backend (with the routes they lie on), its just a matter of iterating over them and pulling the necessary info
     const TransferCards = function(props) {
         let cards = props.transfers.map((transfer) => {
             return (

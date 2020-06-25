@@ -12,9 +12,6 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import { makeStyles } from '@material-ui/core/styles';
 
-//props should essentially contain the line data(from line) as well as the list of stops
-//component should map the lines to a className that assigns the proper color on the left of each card
-
 function StopList(props) {
     const useStyles = makeStyles((theme) => ({
         root: {
@@ -39,6 +36,9 @@ function StopList(props) {
 
 //component should have props = {stops, line}
  function LineCard(props) {
+
+    //setting up styling for the individual cards
+    //transform and rotation effects were taken from material-ui documentation
     const useStyles = makeStyles((theme) => ({
          root: {
             borderLeft: `10px solid #${props.line.attributes.color}`,
@@ -58,20 +58,16 @@ function StopList(props) {
         }
     }));
 
+    //setting up state variable for expanding and collapsing the line card
     const [expanded, setExpanded] = useState(false);
     const classes = useStyles();
+
+    //click event to toggle expand state variable
     const toggleExpanded = () => {
         setExpanded(!expanded);
     }
 
     let title = props.line.attributes.long_name;
-    // if(props.line.isMax) {
-    //     title += ` (Max: ${props.line.stopCount})`;
-    // }
-
-    // if(props.line.isMin) {
-    //     title += ` (Min: ${props.line.stopCount})`
-    // }
 
     return (
         <Card className={classes.root}>
@@ -106,7 +102,11 @@ function StopList(props) {
 export default function BasicInfo(props) {
     let cards = function() {
         let output = '';
+
+        //undefined check on necessary information for template render
         if (props.lines !== undefined && props.stops !== undefined) {
+            //we can pull up the relative information on lines and stops since the index corresponds to the same groups
+            //ex) lines[0] could be the red line, in which case stops[0] will be an array of stops on the red line
             output = props.lines.map((line, index) => {
                 return (
                     <Grid item xs={6} key={props.lines[index].id}>
@@ -114,7 +114,6 @@ export default function BasicInfo(props) {
                     </Grid>
                 )
             });
-
             return (
                 <Grid container justify="space-around" spacing={2}>
                     {output}
@@ -123,7 +122,6 @@ export default function BasicInfo(props) {
         }
         return output;
     }
-
     return (
         <div>
             <div className="basic-info-container">
