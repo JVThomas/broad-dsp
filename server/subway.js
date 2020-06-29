@@ -7,8 +7,10 @@ const processGraph = function (stops, graph, transfers, routeLongName, color) {
     //element will consist of routes with routeName:index pairings
     const addStopAsNeighbor = function (index, stops, centerStop, route) {
         let neighbor = stops[index];
-        centerStop.neighbors[neighbor.attributes.name] = {
-            [route]: index
+        centerStop.neighbors[neighbor.id] = {
+            [route]: index,
+            name: neighbor.attributes.name,
+            id: neighbor.id
         };
     }
 
@@ -17,33 +19,35 @@ const processGraph = function (stops, graph, transfers, routeLongName, color) {
     //each stop also saves its neighbors as objets that denotes its(neighbor) position on the route where the relationship occurs
     stops.forEach((stop, index) => {
         let route = stop.relationships.route.data.id;
-        let stopName = stop.attributes.name;
+        let stopId = stop.id;
         let routeData = {index, long_name: routeLongName, color};
-        if (!graph[stopName]) {
-            graph[stopName] = {
+        if (!graph[stopId]) {
+            graph[stopId] = {
                 routes: {
                     [route]: routeData
                 },
+                name: stop.attributes.name,
                 neighbors: {}
             }
         } else {
-            graph[stopName].routes[route] = routeData;
+            graph[stopId].routes[route] = routeData;
 
             //explicit check on two during processing to prevent duplicate push to transers array
-            let routeCount = Object.keys(graph[stopName].routes).length;
+            let routeCount = Object.keys(graph[stopId].routes).length;
             if(routeCount === 2) {
-                let transferStop = graph[stopName];
-                transferStop.name = stopName;
+                let transferStop = graph[stopId];
+                transferStop.id = stopId;
+                transferStop.name = stop.attributes.name;
                 transfers.push(transferStop);
             }
         }
 
         if (stops[index - 1]) {
-            addStopAsNeighbor(index - 1, stops, graph[stopName], route);
+            addStopAsNeighbor(index - 1, stops, graph[stopId], route);
         }
 
         if (stops[index + 1]) {
-            addStopAsNeighbor(index + 1, stops, graph[stopName], route);
+            addStopAsNeighbor(index + 1, stops, graph[stopId], route);
         }
     });
 }

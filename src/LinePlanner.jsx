@@ -6,16 +6,18 @@ import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
+import { map } from 'lodash';
 export default function LinePlanner(props) {
     const [source, setSource] = useState(undefined);
     const [destination, setDestination] = useState(undefined);
     const [enableButton, setEnableButton] = useState(false);
     const [options, setOptions] = useState(null);
     const [path, setPath] = useState('');
+    
 
     //this hook allows us to set up a new options collections for the drop downs when graph data is updated
     useEffect(() => {
-        setOptions(Object.keys(props.graph));
+        setDropdownOptions();
     }, [props.graph]);
 
     //this hook will check if the source and destination values are populated when their value changes
@@ -35,13 +37,46 @@ export default function LinePlanner(props) {
         }
     }))
 
+    const setDropdownOptions = function() {
+        let options = map(props.graph, (stop, key) => {
+            stop.id = key;
+            return stop;
+        });
+
+        setOptions(options);
+    }
+
     const classes = useStyles();
+
+    const sourceChangeHandler = function(newValue) {
+        if(newValue) {
+            setSource(newValue.id);
+        } else {
+            setSource(null);
+        }
+    }
+
+    const destinationChangeHandler = function(newValue) {
+        if(newValue) {
+            setDestination(newValue.id);
+        } else {
+            setDestination(null);
+        }
+    }
+
+    const setOptionLabel = function(option) {
+        let routeNames = map(option.routes,(route) => route.long_name);
+        if(routeNames.length > 1) {
+            return `${option.name} - Transfer Stop`;
+        } else {
+            return `${option.name} - ${routeNames[0]}`
+        }
+    }
 
     //function used to calculcate a path between two nodes
     //basic idea is to do a BST from the source and destination, updating each at the same time
     //assumption was that if you increment both sides 1 depth simultaneously, the first intersection should be a vaild path between the two
     const calcPath = function(source, destination) {
-
         //null check on values, exit function if check is true
         if(source === undefined || destination === undefined) {
             return null;
@@ -110,7 +145,7 @@ export default function LinePlanner(props) {
             let currentDestinationLines = destinationData.lines;
 
             //conditional if souce node is the same as the destination node
-            if(sourceNode.name === destinationNode.name && sourceNode.name !== undefined) {
+            if(sourceNode.id === destinationNode.id && sourceNode.id !== undefined) {
                 //if paths are empty, it means the source === destination, return any route
                 if(currentSourceLines.length === 0 && currentDestinationLines.length === 0) {
                     setPath(Object.keys(sourceNode.routes)[0]);
@@ -119,12 +154,12 @@ export default function LinePlanner(props) {
                    return compileResult(currentSourceLines, currentDestinationLines);
                 }
             //if sourceNode was already visited by destinationPath, get path saved in breadcrumb and combine with current source path
-            } else if (sourceNode && breadcrumb[sourceNode.name] && breadcrumb[sourceNode.name].visitedBy === 'destination') {
-                let result = compileResult(currentSourceLines, breadcrumb[sourceNode.name].lines);
+            } else if (sourceNode && breadcrumb[sourceNode.id] && breadcrumb[sourceNode.id].visitedBy === 'destination') {
+                let result = compileResult(currentSourceLines, breadcrumb[sourceNode.id].lines);
                 return setPath(result);
             //if destinationNode was already visted on the sourcePath, get saved path in breadcrumb and combine with current destination path
-            } else if (destinationNode && breadcrumb[destinationNode.name] && breadcrumb[destinationNode.name].visitedBy === 'source') {
-                let result = compileResult(breadcrumb[destinationNode.name].lines, currentDestinationLines);
+            } else if (destinationNode && breadcrumb[destinationNode.id] && breadcrumb[destinationNode.id].visitedBy === 'source') {
+                let result = compileResult(breadcrumb[destinationNode.id].lines, currentDestinationLines);
                 return setPath(result);
             } else {
                 //undefined check on source node
@@ -142,7 +177,7 @@ export default function LinePlanner(props) {
                     addToQueue(sourceNode.neighbors, currentSourceLines, sourceQueue);
                     //add node to breadcrumb object with path at the time of visit
                     //mark visitedBy to ensure that cycles are not travelled again
-                    breadcrumb[sourceNode.name] = Object.assign({}, {node: sourceNode, visitedBy:'source'}, {lines: currentSourceLines.slice(0)});
+                    breadcrumb[sourceNode.id] = Object.assign({}, {node: sourceNode, visitedBy:'source'}, {lines: currentSourceLines.slice(0)});
                 }
 
                 //destination node has the same logic as above
@@ -154,7 +189,7 @@ export default function LinePlanner(props) {
                         currentDestinationLines.push(destinationNodeRoutes[0]);
                     }
                     addToQueue(destinationNode.neighbors, currentDestinationLines, destinationQueue);
-                    breadcrumb[destinationNode.name] = Object.assign({}, {node: destinationNode, visitedBy:'destination'}, {lines: currentDestinationLines.slice(0)});
+                    breadcrumb[destinationNode.id] = Object.assign({}, {node: destinationNode, visitedBy:'destination'}, {lines: currentDestinationLines.slice(0)});
                 }
             }
         }
@@ -166,9 +201,9 @@ export default function LinePlanner(props) {
                <Grid item xs={4}>
                    <Autocomplete
                         id="source-box"
-                        onChange={(event, newValue) => {setSource(newValue)}}
+                        onChange={(event, newValue) => {sourceChangeHandler(newValue)}}
                         options={options}
-                        getOptionLabel={(option) => option}
+                        getOptionLabel={setOptionLabel}
                         renderInput={(params) => <TextField {...params} label="Source" variant="outlined"></TextField>}
                    >    
                    </Autocomplete>
@@ -176,9 +211,9 @@ export default function LinePlanner(props) {
                 <Grid item xs={4}>
                     <Autocomplete
                         id="destination-box"
-                        onChange={(event, newValue) => setDestination(newValue)}
+                        onChange={(event, newValue) => destinationChangeHandler(newValue)}
                         options={options}
-                        getOptionLabel={(option) => option}
+                        getOptionLabel={setOptionLabel}
                         renderInput={(params) => <TextField {...params} label="Destination" variant="outlined"></TextField>}
                     >
                     </Autocomplete>
